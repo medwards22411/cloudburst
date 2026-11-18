@@ -14,6 +14,9 @@ plays the same sky each day (a seed from the date), so the board compares skill,
 Built for Category 3 (Event Mini Game) of the Cloud9 x JetBrains "Sky's The Limit"
 hackathon.
 
+**Play it:** https://medwards22411.github.io/cloudburst/ (second screen:
+https://medwards22411.github.io/cloudburst/board.html)
+
 ## Run it
 
 It is plain HTML and JavaScript modules, with no build step, no dependencies and no
