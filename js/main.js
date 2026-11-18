@@ -2,6 +2,7 @@ import { Sound } from "./audio.js";
 import { Game } from "./game.js";
 import { Renderer } from "./render.js";
 import { ScoreStore } from "./scores.js";
+import { SettingsStore, StaffPanel } from "./staff.js";
 import { HEIGHT, WIDTH, pointer } from "./stages.js";
 
 /**
@@ -14,9 +15,12 @@ class App {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d", { alpha: false });
     this.store = new ScoreStore();
+    this.settings = new SettingsStore();
     this.game = new Game(this.store, App.today);
+    this.staff = new StaffPanel(this.store, this.settings, App.today);
     this.renderer = new Renderer(this.ctx);
     this.sound = new Sound();
+    this.sound.muted = !this.settings.value.soundOn;
     this.mouse = { x: WIDTH / 2, y: HEIGHT / 2 };
     this.clicked = false;
     this.key = null;
@@ -29,7 +33,7 @@ class App {
     canvas.addEventListener("pointermove", (e) => this.move(e));
     canvas.addEventListener("pointerdown", (e) => {
       this.move(e);
-      this.clicked = true;
+      if (!this.staff.open) this.clicked = true;
       this.sound.unlock();
     });
     canvas.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -61,6 +65,25 @@ class App {
   }
 
   keydown(e) {
+    if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      if (!e.repeat && this.game.state === "attract") {
+        this.staff.toggle(this.game.state);
+        this.key = null;
+        this.clicked = false;
+      }
+      return;
+    }
+    if (this.staff.open) {
+      e.preventDefault();
+      if ((e.ctrlKey || e.metaKey || e.altKey) || (e.repeat && e.key === "Enter")) return;
+      const soundOn = this.settings.value.soundOn;
+      const action = this.staff.key(e.key);
+      if (soundOn !== this.settings.value.soundOn) this.sound.muted = !this.settings.value.soundOn;
+      if (action === "export") this.exportScores();
+      this.sound.unlock();
+      return;
+    }
     if (e.key === "m" || e.key === "M") {
       if (this.game.state !== "initials") this.sound.toggle();
     }
@@ -70,6 +93,16 @@ class App {
     if (e.key === "Backspace" || e.key === " ") e.preventDefault();
     this.key = e.key;
     this.sound.unlock();
+  }
+
+  exportScores() {
+    const blob = new Blob([this.store.toCsv()], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cloudburst-scores-${App.today()}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   toggleFullscreen() {
@@ -105,8 +138,8 @@ class App {
   frame(now) {
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
-    const input = pointer(this.mouse.x, this.mouse.y, this.clicked);
-    this.game.update(dt, input, this.key);
+    const input = pointer(this.mouse.x, this.mouse.y, this.staff.open ? false : this.clicked);
+    this.game.update(dt, input, this.staff.open ? null : this.key);
     this.clicked = false;
     this.key = null;
     this.sounds();
@@ -120,7 +153,7 @@ class App {
     c.rect(0, 0, WIDTH, HEIGHT);
     c.clip();
     const board = this.game.state === "attract" ? this.store.top(10, App.today()) : [];
-    this.renderer.draw(this.game, this.mouse, board, dt);
+    this.renderer.draw(this.game, this.mouse, board, dt, this.settings.value, this.staff);
     c.restore();
     requestAnimationFrame((t) => this.frame(t));
   }

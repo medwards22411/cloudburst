@@ -48,6 +48,12 @@ header {
   letter-spacing: 0.15em;
 }
 
+#event-name {
+  color: #fff3a4;
+  font-size: 0.65em;
+  overflow-wrap: anywhere;
+}
+
 #date {
   font-size: 0.6em;
   text-align: right;

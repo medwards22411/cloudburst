@@ -1,4 +1,5 @@
 import { ScoreStore } from "./scores.js";
+import { SettingsStore } from "./staff.js";
 
 const FIELDS = ["initials", "total", "aim", "tracking", "decisions", "tier", "date", "at"];
 
@@ -51,13 +52,17 @@ function addedScore(oldValue, newValue) {
 
 function startBoard() {
   const store = new ScoreStore();
+  const settings = new SettingsStore();
   const todayRows = document.getElementById("today-rows");
   const allTimeRows = document.getElementById("all-time-rows");
   const banner = document.getElementById("new-score");
   const dateLabel = document.getElementById("date");
+  const eventName = document.getElementById("event-name");
   let date = localDate(new Date());
   let newest = null;
   let refreshUntil = 0;
+  let scoreSnapshot = null;
+  let waitingForStorage = false;
 
   try {
     const entry = parse(store.storage?.getItem(ScoreStore.LATEST_KEY));
@@ -93,8 +98,9 @@ function startBoard() {
   function render() {
     const now = new Date();
     date = localDate(now);
-    const model = boardModel(store.all(), date, newest, now.getTime());
+    const model = boardModel(scoreSnapshot || store.all(), date, newest, now.getTime());
     dateLabel.textContent = now.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    if (eventName) eventName.textContent = settings.value.eventName;
     if (banner.textContent !== (model.banner || "")) banner.textContent = model.banner || "";
     drawRows(todayRows, model.today);
     drawRows(allTimeRows, model.allTime);
@@ -102,6 +108,9 @@ function startBoard() {
 
   function announce(entry) {
     if (!entry || typeof entry !== "object") return;
+    if (scoreSnapshot && !scoreSnapshot.some((score) => sameEntry(score, entry))) {
+      scoreSnapshot = [...scoreSnapshot, entry].sort((a, b) => b.total - a.total || a.at - b.at).slice(0, ScoreStore.LIMIT);
+    }
     if (!newest || !sameEntry(entry, newest.entry)) {
       if (newest && Number.isFinite(entry.at) && entry.at < newest.entry.at) return;
       newest = { entry, receivedAt: Date.now() };
@@ -116,14 +125,41 @@ function startBoard() {
       const channel = new globalThis.BroadcastChannel("cloudburst");
       channel.addEventListener("message", (event) => {
         if (event.data?.type === "score") announce(event.data.entry);
+        if (event.data?.type === "scores-cleared" && Array.isArray(event.data.scores)) {
+          if (newest?.entry.date === event.data.date) newest = null;
+          scoreSnapshot = event.data.scores;
+          waitingForStorage = !!event.data.persisted;
+          refreshUntil = Date.now() + 1000;
+          render();
+        }
+        if (event.data?.type === "settings") {
+          settings.value = SettingsStore.clean(event.data.settings);
+          render();
+        }
       });
     } catch {
       // Storage events are the fallback.
     }
   }
   window.addEventListener("storage", (event) => {
-    if (event.key === ScoreStore.LATEST_KEY) announce(parse(event.newValue));
+    if (event.key === SettingsStore.KEY || event.key === null) {
+      settings.value = event.key === null ? settings.read() : SettingsStore.clean(parse(event.newValue));
+      render();
+    }
+    if (event.key === ScoreStore.LATEST_KEY) {
+      const entry = parse(event.newValue);
+      if (entry) announce(entry);
+      else { newest = null; render(); }
+    }
     if (event.key === ScoreStore.KEY) {
+      scoreSnapshot = null;
+      waitingForStorage = false;
+      const oldScores = parse(event.oldValue, []);
+      const newScores = parse(event.newValue, []);
+      if (newest && Array.isArray(oldScores) && Array.isArray(newScores) &&
+          oldScores.some((score) => sameEntry(score, newest.entry)) && !newScores.some((score) => sameEntry(score, newest.entry))) {
+        newest = null;
+      }
       const entry = addedScore(event.oldValue, event.newValue);
       if (entry) announce(entry);
       else render();
@@ -134,6 +170,13 @@ function startBoard() {
   render();
   setInterval(() => {
     const now = Date.now();
+    if (waitingForStorage && scoreSnapshot) {
+      const saved = store.all();
+      if (saved.length === scoreSnapshot.length && saved.every((entry, i) => sameEntry(entry, scoreSnapshot[i]))) {
+        scoreSnapshot = null;
+        waitingForStorage = false;
+      }
+    }
     if (newest && now - newest.receivedAt >= 10000) {
       newest = null;
       render();

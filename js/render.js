@@ -66,7 +66,7 @@ export class Renderer {
    * :param board: today's top scores, for the idle screen
    * :param dt: seconds since the last frame
    */
-  draw(game, pointer, board, dt) {
+  draw(game, pointer, board, dt, settings = { eventName: "" }, staff = null) {
     const c = this.ctx;
     this.drift = (this.drift + dt * 12) % WIDTH;
     const key = game.state === "intro" || game.state === "play" ? game.round : game.state === "attract" ? "attract" : "results";
@@ -77,12 +77,13 @@ export class Renderer {
     c.drawImage(this.backdrop, -this.drift, 0);
     c.drawImage(this.backdrop, WIDTH * 2 - this.drift, 0);
     c.restore();
-    if (game.state === "attract") this.attract(game, board);
+    if (game.state === "attract") this.attract(game, board, settings.eventName);
     if (game.state === "intro") this.intro(game);
     if (game.state === "play") this.play(game);
     if (game.state === "results") this.results(game);
     if (game.state === "initials") this.initials(game, pointer);
-    this.crosshair(pointer.x, pointer.y);
+    if (staff?.open) this.staffPanel(staff);
+    else this.crosshair(pointer.x, pointer.y);
   }
 
   sky([top, bottom]) {
@@ -115,10 +116,11 @@ export class Renderer {
     c.fill();
   }
 
-  attract(game, board) {
+  attract(game, board, eventName = "") {
     const pulse = 0.5 + 0.5 * Math.sin(game.timer * 3);
     this.text("CLOUDBURST", WIDTH * 0.36, 230, 132, { weight: 900 });
-    this.text("Aim. Track. Read. 90 seconds.", WIDTH * 0.36, 330, 40, { weight: 600 });
+    if (eventName) this.text(eventName, WIDTH * 0.36, 315, 34, { color: "#ffd166" });
+    this.text("Aim. Track. Read. 90 seconds.", WIDTH * 0.36, eventName ? 375 : 330, 40, { weight: 600 });
     this.ctx.globalAlpha = 0.6 + 0.4 * pulse;
     this.text("Click anywhere to play", WIDTH * 0.36, 470, 46);
     this.ctx.globalAlpha = 1;
@@ -142,6 +144,28 @@ export class Renderer {
       this.text(s.initials, WIDTH - 360, y, 30, { align: "left", color: fresh ? "#ffd166" : "#ffffff" });
       this.text(String(s.total), WIDTH - 110, y, 30, { align: "right", color: fresh ? "#ffd166" : "#ffffff" });
     });
+  }
+
+  staffPanel(staff) {
+    const stats = staff.store.stats(staff.today());
+    this.ctx.fillStyle = "rgba(8, 24, 52, 0.65)";
+    this.ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    this.panel(260, 70, 1080, 760, 0.88);
+    this.text("STAFF PANEL", WIDTH / 2, 130, 48, { color: "#ffd166", weight: 900 });
+    this.text(`Today: ${stats.count} games   •   Best ${stats.best}   •   Average ${Math.round(stats.average * 10) / 10}`, WIDTH / 2, 205, 30);
+    const rows = [
+      ["Event name", `${staff.settings.value.eventName || (staff.editing ? "" : "(none)")}${staff.editing ? "_" : ""}`],
+      ["Sound on by default", staff.settings.value.soundOn ? "Yes" : "No"],
+      ["Save scores to a file", "CSV"],
+      ["Clear today's board", staff.confirming ? "Press Enter again within 3 seconds" : ""],
+    ];
+    rows.forEach(([label, value], i) => {
+      const y = 280 + i * 105;
+      this.panel(320, y - 34, 960, 82, i === staff.selected ? 0.8 : 0.28);
+      this.text(`${i === staff.selected ? "›  " : ""}${label}`, 350, y + 7, 30, { align: "left", color: i === staff.selected ? "#ffd166" : "#ffffff" });
+      this.text(value, 1250, y + 7, i === 3 ? 23 : 30, { align: "right", weight: 600 });
+    });
+    this.text(staff.editing ? "Type the event name • Enter to finish" : "↑ ↓ select  •  Enter act  •  Esc close", WIDTH / 2, 760, 27, { weight: 500 });
   }
 
   intro(game) {
