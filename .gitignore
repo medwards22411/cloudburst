@@ -2,3 +2,13 @@ node_modules/
 *.log
 .DS_Store
 *.log.txt
+
+# WebStorm: share project settings, keep personal ones local
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf/
+.idea/dataSources.local.xml
+.idea/httpRequests/
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/copilot*

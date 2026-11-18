@@ -16,12 +16,16 @@ hackathon.
 
 ## Run it
 
-It is plain HTML and JavaScript modules, with no build step and no network use. Serve
-the folder with any static server and open it:
+It is plain HTML and JavaScript modules, with no build step, no dependencies and no
+network use. With Node.js installed, start the included offline server and open
+http://localhost:8080/:
 
 ```bash
-npx serve .
+npm start
 ```
+
+Any other static server works too. In WebStorm, the shared run setups **Run booth
+server**, **All tests** and **Calibrate tiers** are ready in the Run menu.
 
 Keys: **F** full screen, **M** mute, **Esc** abandon a run.
 
@@ -45,8 +49,8 @@ Settings are stored locally on this computer.
 ## Tests
 
 ```bash
-node --test "tests/*.test.mjs"
-node tests/calibrate.mjs
+npm test
+npm run calibrate
 ```
 
 The tests drive the real game with scripted bot players: every round's rules, the
