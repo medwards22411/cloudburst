@@ -5,6 +5,8 @@
 export class ScoreStore {
   static KEY = "cloudburst.scores.v1";
 
+  static LATEST_KEY = "cloudburst.latest.v1";
+
   /** The most scores kept; the lowest drop off first. */
   static LIMIT = 500;
 
@@ -68,6 +70,25 @@ export class ScoreStore {
       }
     } else {
       this.memory = kept;
+    }
+    if (this.storage) {
+      try {
+        this.storage.setItem(ScoreStore.LATEST_KEY, JSON.stringify(clean));
+      } catch {
+        // The score is already saved; notification must not interrupt the game.
+      }
+    }
+    if (typeof globalThis.BroadcastChannel !== "undefined") {
+      try {
+        const channel = new globalThis.BroadcastChannel("cloudburst");
+        try {
+          channel.postMessage({ type: "score", entry: clean });
+        } finally {
+          channel.close();
+        }
+      } catch {
+        // Storage events still provide updates if the channel is unavailable.
+      }
     }
     return clean;
   }

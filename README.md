@@ -25,6 +25,11 @@ npx serve .
 
 Keys: **F** full screen, **M** mute, **Esc** abandon a run.
 
+## Second screen
+
+Open `board.html` from the same server in a second window, drag it to the second
+monitor, and press **F11**. The leaderboard updates on the same computer without Wi-Fi.
+
 ## Tests
 
 ```bash

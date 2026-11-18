@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Cloudburst second-screen leaderboard.">
+    <title>Cloudburst Leaderboard</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/board.css">
+    <script type="module" src="js/board.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">CLOUDBURST <span>LEADERBOARD</span></div>
+      <div id="date"></div>
+    </header>
+    <div id="new-score" role="status" aria-live="polite"></div>
+    <main>
+      <section class="panel today">
+        <h1>TODAY'S TOP 10</h1>
+        <table>
+          <thead><tr><th>PLACE</th><th>INITIALS</th><th>TOTAL</th><th>TIER</th></tr></thead>
+          <tbody id="today-rows"></tbody>
+        </table>
+      </section>
+      <section class="panel all-time">
+        <h2>ALL-TIME TOP 5</h2>
+        <table>
+          <thead><tr><th>PLACE</th><th>INITIALS</th><th>TOTAL</th><th>TIER</th></tr></thead>
+          <tbody id="all-time-rows"></tbody>
+        </table>
+      </section>
+    </main>
+    <footer>Play at the booth. Same sky for everyone today.</footer>
+    <noscript>Cloudburst needs JavaScript.</noscript>
+  </body>
+</html>
