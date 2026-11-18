@@ -97,7 +97,7 @@ The rendering file was opened, but its contents are not summarized.
 All four staff tests passed with no failures.
 ? soak-test
 Added `tests/soak.test.mjs`; no game-code changes were needed.
-- Targeted test: **1 passed, 0 failed**; 300 runs in 0.718 s. First/last 50: 0.578/0.425 ╡s per frame.
+- Targeted test: **1 passed, 0 failed**; 300 runs in 0.718 s. First/last 50: 0.578/0.425 µs per frame.
 - Full suite: **33 passed, 0 failed** on the final run.
 ? Edited files
 Updated board.html

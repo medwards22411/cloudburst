@@ -59,6 +59,11 @@ and the score store. `calibrate.mjs` plays 160 bot runs across four skill levels
 prints the score spread the tiers are tuned to. `soak.test.mjs` checks 300 consecutive
 runs for bounded state, cleanup and sustained frame performance.
 
+## How it was built
+
+Built with JetBrains' Junie agent, WebStorm and Claude Code. The workflow, the briefs
+Junie worked from and how each change was checked are in [AI_SHOWCASE.md](AI_SHOWCASE.md).
+
 ## License
 
 MIT
