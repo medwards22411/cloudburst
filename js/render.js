@@ -152,7 +152,7 @@ export class Renderer {
     this.ctx.fillRect(0, 0, WIDTH, HEIGHT);
     this.panel(260, 70, 1080, 760, 0.88);
     this.text("STAFF PANEL", WIDTH / 2, 130, 48, { color: "#ffd166", weight: 900 });
-    this.text(`Today: ${stats.count} games   •   Best ${stats.best}   •   Average ${Math.round(stats.average * 10) / 10}`, WIDTH / 2, 205, 30);
+    this.text(`Today: ${stats.count} games   •   Best ${stats.best}   •   Average ${Math.round(stats.average)}`, WIDTH / 2, 205, 30);
     const rows = [
       ["Event name", `${staff.settings.value.eventName || (staff.editing ? "" : "(none)")}${staff.editing ? "_" : ""}`],
       ["Sound on by default", staff.settings.value.soundOn ? "Yes" : "No"],
